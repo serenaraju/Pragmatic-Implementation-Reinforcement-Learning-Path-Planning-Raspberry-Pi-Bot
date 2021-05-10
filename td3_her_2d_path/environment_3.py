@@ -13,8 +13,8 @@ pi = math.pi
 class Environment:
     def __init__(self):
 
-        joint1_range = [-5.0, 5.0]
-        joint2_range = [-5.0, 5.0]
+        joint1_range = [-7.0, 7.0]
+        joint2_range = [-7.0, 7.0]
 
         step_size = 0.5
         goal_bound = 0.1
@@ -41,7 +41,7 @@ class Environment:
 
         self.obs = []
         self.obs.append(np.array([[2.5, 2.5]]))
-        self.obs.append(np.array([[2.5, -2.5]]))
+        self.obs.append(np.array([[6.5, -6.5]]))
         self.obs.append(np.array([[-2.5, 2.5]]))
         self.obs.append(np.array([[-2.5, -2.5]]))
         self.obs.append(np.array([[0.0, 0.0]]))

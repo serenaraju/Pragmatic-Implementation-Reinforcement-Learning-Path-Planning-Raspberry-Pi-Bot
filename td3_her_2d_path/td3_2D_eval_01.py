@@ -8,8 +8,6 @@ import matplotlib.pyplot as plt
 import time
 import pickle
 import scipy.io
-from scipy import interpolate
-
 
 from hyper_parameter_3 import hp
 
@@ -38,10 +36,9 @@ class Env:
         
         self.obs = []
         self.obs.append(np.array([[2.5, 2.5]]))
-        self.obs.append(np.array([[6.5, -6.5]]))
+        self.obs.append(np.array([[2.5, -2.5]]))
         self.obs.append(np.array([[-2.5, 2.5]]))
         self.obs.append(np.array([[-2.5, -2.5]]))
-        self.obs.append(np.array([[0, 0]]))
         self.obs_r = 1.0
         
 
@@ -154,16 +151,6 @@ class Critic(tf.keras.Model):
         return x1
 
 
-class CubicSplinePath:
-    def __init__(self, x, y):
-        x, y = map(np.asarray, (x, y))
-        s = np.append([0],(np.cumsum(np.diff(x)**2) + np.cumsum(np.diff(y)**2))**0.5)
-
-        self.X = interpolate.CubicSpline(s, x)
-        self.Y = interpolate.CubicSpline(s, y)
-        self.length = s[-1]
-
-
 class TD3():
     def __init__(self):
         super().__init__()
@@ -259,12 +246,37 @@ class TD3():
             action += tf.random.normal(shape=action.shape,
                                        mean=0., stddev=sigma, dtype=tf.float32)
             return tf.clip_by_value(action, -max_action, max_action)
+            
+def capture_event(event,x,y,flags,params):
+    # event= click of the mouse
+    # x,y are position of cursor
+    # check the event if it was right click
+    key_points = []
+    
+    plt.figure(figsize=(6,6))
+    path = np.reshape(visual_memory, [local_step+1, 2])
+    circle1=plt.Circle(env.obs[0][0],env.obs_r,color='k')
+    circle2=plt.Circle(env.obs[1][0],env.obs_r,color='k')
+    circle3=plt.Circle(env.obs[2][0],env.obs_r,color='k')
+    circle4=plt.Circle(env.obs[3][0],env.obs_r,color='k')
+    plt.gca().add_artist(circle1)
+    plt.gca().add_artist(circle2)
+    plt.gca().add_artist(circle3)
+    plt.gca().add_artist(circle4)
+
+    if event==cv2.EVENT_RBUTTONDOWN:
+        # create a circle at that position
+        # of radius 30 and color red
+
+        cv2.circle(image,(x,y),10,(0,0,255),-1)
+        key_points.append((x,y))
+
 
 
 if __name__ == "__main__":
 
-    joint1_range = [-7.0, 7.0]
-    joint2_range = [-7.0, 7.0]
+    joint1_range = [-5.0, 5.0]
+    joint2_range = [-5.0, 5.0]
 
     step_size = 0.5
     goal_bound = 0.1
@@ -321,30 +333,22 @@ if __name__ == "__main__":
 
         print('local_step:', local_step, '/ score:', score)
 
-        plt.figure(figsize=(8,8))
+        plt.figure(figsize=(6,6))
         path = np.reshape(visual_memory, [local_step+1, 2])
-        print(path)
         circle1=plt.Circle(env.obs[0][0],env.obs_r,color='k')
         circle2=plt.Circle(env.obs[1][0],env.obs_r,color='k')
         circle3=plt.Circle(env.obs[2][0],env.obs_r,color='k')
         circle4=plt.Circle(env.obs[3][0],env.obs_r,color='k')
-        circle5=plt.Circle(env.obs[4][0],env.obs_r,color='k')
         plt.gca().add_artist(circle1)
         plt.gca().add_artist(circle2)
         plt.gca().add_artist(circle3)
         plt.gca().add_artist(circle4)
-        plt.gca().add_artist(circle5)
         plt.plot(path[0, 0], path[0, 1], 'kD', markersize=8, mfc='none', markeredgewidth=2., label='start')
         plt.plot(env.goal[0, 0], env.goal[0, 1], 'ko', markersize=10, mfc='none', markeredgewidth=2., label='goal')
         plt.plot(path[:,0],path[:,1],'b')
         plt.plot(path[:,0],path[:,1],'b.')
-        reference_path = CubicSplinePath(path[:,0], path[:,1])
-        s = np.arange(0, reference_path.length, 0.1)
-
-        plt.plot(reference_path.X(s), reference_path.Y(s), "-r", label="spline")
-
-
-        plt.xlim(-8,8)
-        plt.ylim(-8,8)
+        plt.xlim(-5,5)
+        plt.ylim(-5,5)
         plt.show()
+
 
